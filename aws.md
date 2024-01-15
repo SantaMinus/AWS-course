@@ -323,6 +323,179 @@ less bandwidth.
 #### Use cases for block storage
 
 Because block storage is optimized for **low-latency operations**, it is a preferred storage choice
-for **high-performance** enterprise workloads and **transactional**, **mission-critical**, and 
+for **high-performance** enterprise workloads and **transactional**, **mission-critical**, and
 **I/O-intensive** applications.
 
+### Object storage
+
+In object storage, files are stored as objects. Objects, much like files, are treated as a single,
+distinct unit of data when stored. However, unlike file storage, these objects are stored in a
+bucket using a **flat structure**, meaning there are no folders, directories, or complex
+hierarchies. Each object contains a unique identifier. This identifier, along with any additional
+metadata, is bundled with the data and stored.
+
+#### Use cases for object storage
+
+With object storage, you can store almost any type of data, and there is **no limit** to the number
+of objects stored, which makes it readily scalable. Object storage is generally useful when storing
+**large or unstructured data sets**.
+
+**Data archiving**
+
+Cloud object storage is excellent for long-term data retention. You can cost-effectively archive
+large amounts of rich media content and retain mandated regulatory data for extended periods of
+time. You can also use cloud object storage to replace on-premises tape and disk archive
+infrastructure. This storage solution provides enhanced data durability, immediate retrieval times,
+better security and compliance, and greater data accessibility.
+
+**Backup and recovery**
+
+You can configure object storage systems to replicate content so that if a physical device fails,
+duplicate object storage devices become available. This ensures that your systems and applications
+continue to run without interruption. You can also replicate data across multiple data centers and
+geographical regions.
+
+**Rich media**
+
+With object storage, you can accelerate applications and reduce the cost of storing rich media files
+such as videos, digital images, and music. By using storage classes and replication features, you
+can create **cost-effective**, **globally replicated architecture** to deliver media to distributed
+users.
+
+### Relating back to traditional storage systems
+
+- Block storage in the cloud is analogous to **direct-attached storage** (DAS) or a **storage area
+  network** (SAN).
+- File storage systems are often supported with a **network-attached storage** (NAS) server.
+
+### Amazon Elastic File System (Amazon EFS)
+
+**Amazon Elastic File System** (Amazon EFS) is a set-and-forget file system that automatically grows
+and shrinks as you add and remove files. There is no need for provisioning or managing storage
+capacity and performance. Amazon EFS can be used with AWS compute services and on-premises
+resources.
+
+With the Amazon EFS simple web interface, you can create and configure file systems quickly without
+any minimum fee or setup cost. You **pay only for the storage used** and you can choose from a range
+of storage classes designed to fit your use case.
+
+| Standard storage classes                                                                                                                       | One zone storage classes                                                                                                                        |
+|------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| EFS Standard and EFS Standard-Infrequent Access (Standard-IA) offer Multi-AZ resilience and the highest levels of durability and availability. | EFS One Zone and EFS One Zone-Infrequent Access (EFS One Zone-IA) provide additional savings by saving your data in a single availability zone. |
+
+### Amazon FSx
+
+Amazon FSx is a fully managed service that offers reliability, security, scalability, and a broad
+set of capabilities that make it convenient and cost effective to launch, run, and scale
+high-performance file systems in the cloud. With Amazon FSx, you can choose between four widely used
+file systems: Lustre, NetApp ONTAP, OpenZFS, and Windows File Server. You can choose based on your
+familiarity with a file system or based on your workload requirements for feature sets, performance
+profiles, and data management capabilities.
+
+## Block Storage with Amazon EC2 Instance Store and Amazon EBS
+
+The unique characteristics of block storage make it the preferred option for transactional,
+mission-critical, and I/O-intensive applications.
+
+### Amazon EC2 instance store
+
+Amazon Elastic Compute Cloud (Amazon EC2) instance store provides temporary block-level storage for
+an instance. This storage is located on disks that are physically attached to the host computer.
+This ties the lifecycle of the data to the lifecycle of the EC2 instance (ephemeral storage).
+
+Instance store is ideal if you host applications that replicate data to other EC2 instances, such as
+Hadoop clusters. For these cluster-based workloads, having the speed of locally attached volumes and
+the resiliency of replicated data helps you achieve data distribution at high performance. It’s also
+ideal for temporary storage of information that changes frequently, such as buffers, caches, scratch
+data, and other temporary content.
+
+![EC2 instance store](images/ec2-instance-store.png)
+
+## Amazon EBS
+
+**Amazon Elastic Block Store** (Amazon EBS) is block-level storage that you can attach to an Amazon
+EC2 instance.
+
+- detachable
+- distinct
+- size-limited
+- 1-to-1 connection
+
+> AWS announced the Amazon EBS multi-attach feature that permits Provisioned IOPS SSD (io1 or io2)
+> volumes to be attached to multiple EC2 instances at one time. This feature is not available for
+> all
+> instance types, and all instances must be in the same Availability Zone
+
+### Scaling Amazon EBS volumes
+
+- increase volume size (max size 64 TiB)
+- attach multiple volumes
+
+### Amazon EBS use cases
+
+Amazon EBS is useful when you must retrieve data quickly and have data persist long term.
+
+- Operating systems
+
+Boot and root volumes can be used to store an operating system. The root device for an instance
+launched from an Amazon Machine Image (AMI) is typically an EBS volume. These are commonly referred
+to as EBS-backed AMIs.
+
+- Databases
+
+As a storage layer for databases running on Amazon EC2 that will scale with your performance needs
+and provide consistent and low-latency performance.
+
+- Enterprise applications
+
+Amazon EBS provides high availability and high durability block storage to run business-critical
+applications.
+
+- Big data analytics engines
+
+Amazon EBS offers data persistence, dynamic performance adjustments, and the ability to detach and
+reattach volumes, so you can resize clusters for big data analytics.
+
+### EBS volume types
+
+- **solid-state drives** (SSDs) - used for transactional workloads with frequent read/write
+  operations with small I/O
+  size.
+
+  ![SSD volumes](images/SSD volumes.PNG)
+- **hard-disk drives** (HDDs) - used for large streaming workloads that need high throughput
+  performance
+
+  ![HDD volumes](images/HDD volumes.PNG)
+
+### Amazon EBS snapshots
+
+EBS snapshots are incremental backups that only save the blocks on the volume that have changed
+after your most recent snapshot. The backups are stored redundantly in multiple Availability Zones
+using Amazon S3.
+
+## Object Storage with Amazon S3
+
+Unlike Amazon EBS, Amazon **Simple Storage Service** (Amazon S3) is a standalone storage solution
+that isn’t tied to compute. With Amazon S3, you can retrieve your data from anywhere on the web.
+
+Amazon S3 is an object storage service. Object storage stores data in a flat structure. An object is
+a file combined with metadata.
+
+A bucket must be created first. The combination of a bucket name, key, and version ID uniquely
+identifies the object.
+
+### Amazon S3 bucket names
+
+Amazon S3 supports **global buckets**. Therefore, each bucket name must be **unique** across all AWS
+accounts in all AWS Regions within a partition. A partition is a grouping of Regions, of which AWS
+currently has three: Standard Regions, China Regions, and AWS GovCloud (US).
+
+- Bucket names must be between 3 (min) and 63 (max) characters long.
+- Bucket names can consist only of lowercase letters, numbers, dots (.), and hyphens (-).
+- Bucket names must begin and end with a letter or number.
+- Buckets must not be formatted as an IP address.
+- A bucket name cannot be used by another AWS account in the same partition until the bucket is
+  deleted.
+
+### Object key names
