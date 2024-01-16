@@ -517,6 +517,7 @@ currently has three: Standard Regions, China Regions, and AWS GovCloud (US).
 ## Security in Amazon S3
 
 Everything in Amazon S3 is **private by default**.
+
 ![S3 security](images/s3-security.png)
 
 To be more specific about who can do what with your Amazon S3 resources, Amazon S3 provides several security management
