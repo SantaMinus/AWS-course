@@ -418,8 +418,9 @@ EC2 instance.
 
 - detachable
 - distinct
-- size-limited
+- size-limited: you pay for what you provision (you have to provision storage in advance).
 - 1-to-1 connection
+- EBS volumes are replicated across multiple servers in a single Availability Zone.
 
 > AWS announced the Amazon EBS multi-attach feature that permits Provisioned IOPS SSD (io1 or io2)
 > volumes to be attached to multiple EC2 instances at one time. This feature is not available for
@@ -499,3 +500,113 @@ currently has three: Standard Regions, China Regions, and AWS GovCloud (US).
   deleted.
 
 ### Object key names
+
+> Amazon S3 supports buckets and objects, and there is no hierarchy. However, by using prefixes and delimiters in an
+> object key name, the Amazon S3 console and the AWS SDKs are able to infer hierarchy and introduce the concept of
+> folders.
+
+### Amazon S3 use cases
+
+- Backup and storage
+- Media hosting
+- Software delivery
+- Data lakes
+- Static websites
+- Static content
+
+## Security in Amazon S3
+
+Everything in Amazon S3 is **private by default**.
+![S3 security](images/s3-security.png)
+
+To be more specific about who can do what with your Amazon S3 resources, Amazon S3 provides several security management
+features: **IAM policies**, **S3 bucket policies**, and **encryption** to develop and implement custom security
+policies.
+
+### Amazon S3 and IAM policies
+
+When IAM policies are attached to resources (buckets and objects) or IAM users, groups, and roles, the policies define
+which actions they can perform. Access policies attached to the resources are referred to as **resource-based policies**
+and access policies attached to users in an account are called **user policies**.
+
+You should use IAM policies for private buckets in the following **two scenarios**:
+
+- You have **many buckets** with **different permission requirements**. Instead of defining many different S3 bucket
+  policies, you can use IAM policies.
+- You want **all policies** to be in a **centralized location**. By using IAM policies, you can manage all policy
+  information in one location.
+
+### Amazon S3 encryption
+
+Amazon S3 reinforces encryption **in transit** (as it travels to and from Amazon S3) and **at rest**. To protect data,
+Amazon S3 **automatically** encrypts all objects on upload and applies server-side encryption with S3-managed keys as
+the base level of encryption for every bucket in Amazon S3 at no additional cost.
+
+## Amazon S3 storage classes
+
+| Storage Class                                  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| S3 Standard                                    | This is considered general-purpose storage for cloud applications, dynamic websites, content distribution, mobile and gaming applications, and big data analytics.                                                                                                                                                                                                                                                                                                                                                                            |
+| S3 Intelligent-Tiering                         | This tier is useful if your data has **unknown or changing access patters**. S3 Intelligent-Tiering stores objects in three tiers: a **frequent** access tier, an **infrequent** access tier, and an **archive instance** access tier. Amazon S3 monitors access patterns of your data and **automatically** moves your data to the most cost-effective storage tier based on frequency of access.                                                                                                                                            |
+| S3 Standard-Infrequent Access (S3 Standard-IA) | This tier is for data that is accessed **less frequently** but requires **rapid access** when needed. S3 Standard-IA offers the high durability, high throughput, and low latency of S3 Standard, with a low per-GB storage price and per-GB retrieval fee. This storage tier is ideal if you want to store long-term backups, disaster recovery files, and so on.                                                                                                                                                                            |
+| S3 One Zone-Infrequent Access (S3 One Zone-IA) | Unlike other S3 storage classes that store data in a minimum of three Availability Zones, S3 One Zone-IA stores data in a **single Availability Zone**, which makes it less expensive than S3 Standard-IA. S3 One Zone-IA is ideal for customers who want a lower-cost option for infrequently accessed data, but do not require the availability and resilience of S3 Standard or S3 Standard-IA. It's a good choice for storing secondary backup copies of on-premises data or easily recreatable data.                                     |
+| S3 Glacier Instant Retrieval                   | Use S3 Glacier Instant Retrieval for archiving data that is **rarely accessed** and requires **millisecond retrieval**. Data stored in this storage class offers a cost savings of up to 68 percent compared to the S3 Standard-IA storage class, with the same latency and throughput performance.                                                                                                                                                                                                                                           |
+| S3 Glacier Flexible Retrieval                  | S3 Glacier Flexible Retrieval offers low-cost storage for archived data that is **accessed 1–2 times per year**. With S3 Glacier Flexible Retrieval, your data can be **accessed** in as little as **1–5 minutes** using an expedited retrieval. You can also request **free bulk retrievals** in **up to 5–12 hours**. It is an ideal solution for backup, disaster recovery, offsite data storage needs, and for when some data occasionally must be retrieved in minutes.                                                                  |
+| S3 Glacier Deep Archive                        | S3 Glacier Deep Archive is the **lowest-cost** Amazon S3 storage class. It supports long-term retention and digital preservation for data that might be accessed once or twice a year. Data stored in the S3 Glacier Deep Archive storage class has a default **retrieval time of 12 hours**. It is designed for customers that retain data sets for 7–10 years or longer, to meet regulatory compliance requirements. Examples include those in highly regulated industries, such as the financial services, healthcare, and public sectors. |
+| S3 on Outposts                                 | Amazon S3 on Outposts delivers object storage to your on-premises AWS Outposts environment using S3 API's and features. For workloads that require satisfying local data residency requirements or need to keep data close to on premises applications for performance reasons, the S3 Outposts storage class is the ideal option.                                                                                                                                                                                                            |
+
+### Amazon S3 versioning
+
+Versioning keeps multiple versions of a single object in the same bucket. This preserves old versions of an object
+without using different names, which helps with object recovery from accidental deletions, accidental overwrites, or
+application failures.
+![s3-versioning](images/s3-versioning.png)
+
+By using **versioning-enabled buckets**, you can recover objects from accidental **deletion** or **overwrite**:
+
+- Deleting an object does not remove the object permanently. Instead, Amazon S3 puts a **marker** on the object that
+  shows that you tried to delete it. If you want to restore the object, you can **remove the marker** and the object is
+  **reinstated**.
+- If you **overwrite** an object, it results in a **new object version** in the bucket. You still have access to
+  previous versions of the object.
+
+### Versioning states
+
+Buckets can be in one of three states. The versioning **state** applies to **all objects** in the bucket. Storage *
+*costs** are incurred for **all objects** in your bucket, including **all versions**.
+
+- **Unversioned (default)** - No new and existing objects in the bucket have a version.
+- **Versioning-enabled** - Versioning is enabled for all objects in the bucket. After you version-enable a bucket, it
+  can **never return to an unversioned state**. However, you can **suspend versioning** on that bucket.
+- **Versioning-suspended** - Versioning is **suspended for new objects**. All new objects in the bucket will not have a
+  version. However, all **existing** objects **keep** their object versions.
+
+### Managing your storage lifecycle
+
+Two types of actions:
+
+- Transition actions define when objects should transition to another storage class.
+- Expiration actions define when objects expire and should be permanently deleted.
+
+![storage-lifecycle](images/storage-lifecycle.png)
+
+The following use cases are good candidates for the use of lifecycle configuration rules:
+
+- Periodic logs
+- Data that changes in access frequency
+
+### Choosing the Right Storage Service
+
+| EC2 instance store                           | EBS                                                                               | S3                                                                                | EFS                                                                                                                                                               |
+|----------------------------------------------|-----------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Ephemeral block storage                      | Block storage.                                                                    | Object storage.                                                                   | File storage.                                                                                                                                                     |
+| Included in the EC2 instance cost            | You pay for what you provision (you have to provision storage in advance).        | You pay for what you use (you don’t have to provision storage in advance).        | Amazon EFS is elastic, and automatically scales up or down as you add or remove files. And you pay only for what you use.                                         |    
+| Is terminated together with the EC2 instance | EBS volumes are replicated across multiple servers in a single Availability Zone. | Amazon S3 replicates your objects across multiple Availability Zones in a Region. | Amazon EFS is highly available and designed to be highly durable. All files and directories are redundantly stored within and across multiple Availability Zones. |
+| Built-in drive                               | Most EBS volumes can only be attached to a single EC2 instance at a time.         | Amazon S3 is not storage attached to compute.                                     | Amazon EFS offers native lifecyle management of your files and a range of storage classes to choose from.                                                         |
+
+#### Amazon FSx
+
+Amazon FSx provides native compatibility with **third-party file systems**. You can choose from NetApp ONTAP, OpenZFS,
+Windows File Server, and Lustre. With Amazon FSx, you don't need to worry about managing file servers and storage. This
+is because Amazon FSx automates time consuming administration task such as hardware provisioning, software
+configuration, patching, and backups. This frees you up to focus on your applications, end users, and business.
