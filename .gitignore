@@ -3,6 +3,3 @@
 /.idea
 /workspace.xml
 
-# But not these files
-!.gitignore
-!/images/*.png
