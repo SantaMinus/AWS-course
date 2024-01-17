@@ -1,8 +1,8 @@
 # Default ignored files
 /shelf/
+/.idea
 /workspace.xml
 
 # But not these files
 !.gitignore
-!/images
-!/images/
+!/images/*.png
