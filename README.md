@@ -611,3 +611,29 @@ Amazon FSx provides native compatibility with **third-party file systems**. You 
 Windows File Server, and Lustre. With Amazon FSx, you don't need to worry about managing file servers and storage. This
 is because Amazon FSx automates time consuming administration task such as hardware provisioning, software
 configuration, patching, and backups. This frees you up to focus on your applications, end users, and business.
+
+## Databases
+
+> ACID - atomicity, consistenct, isolation, durability
+
+### Unmanaged databases
+
+If you host a database on Amazon EC2, AWS implements and maintains the physical infrastructure and hardware and installs
+the EC2 instance operating system (OS). However, you are still responsible for managing the EC2 instance, managing the
+database on that host, optimizing queries, and managing customer data.
+
+This is called an **unmanaged database** option. In this option, AWS is responsible for and has control over the
+hardware and underlying infrastructure. You are responsible for and have control over management of the host and
+database.
+
+![unmanaged-DB](images/unmanaged-db.png)
+
+### Managed databases
+
+Managed database services provide the setup of both the EC2 instance and the database, and they provide systems for high
+availability, scalability, patching, and backups. However, in this model, you’re still responsible for database tuning,
+query optimization, and ensuring that your customer data is secure. This option provides the ultimate convenience but
+the least amount of control compared to the two previous options.
+
+![managed-db](images/managed-db.png)
+
