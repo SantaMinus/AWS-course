@@ -637,3 +637,99 @@ the least amount of control compared to the two previous options.
 
 ![managed-db](images/managed-db.png)
 
+## Amazon RDS
+
+**Amazon RDS** is a managed database service customers can use to create and manage relational databases in the cloud
+without the operational burden of traditional database management.
+
+Supported Amazon RDS engines include the following:
+
+- Commercial: Oracle, SQL Server
+- Open source: MySQL, PostgreSQL, MariaDB
+- Cloud native: Aurora
+
+### Database instances
+
+Underneath the DB instance is an EC2 instance. However, this instance is managed through the Amazon RDS console instead
+of the Amazon EC2 console.
+
+DB instance classes:
+
+- Standard
+- Memory optimized
+- Burstable
+
+### Storage on Amazon RDS
+
+The storage portion of DB instances for Amazon RDS use Amazon **Elastic Block Store** (Amazon EBS) volumes for database
+and log storage. This includes **MySQL**, **MariaDB**, **PostgreSQL**, **Oracle**, and **SQL Server**.
+
+When using **Aurora**, data is stored in cluster volumes, which are single, **virtual volumes** that use solid-state
+drives (**SSD**s). A cluster volume contains copies of your data across three Availability Zones in a single AWS Region.
+For **nonpersistent**, temporary files, Aurora uses **local storage**.
+
+Amazon RDS provides three **storage types**:
+
+- **General Purpose SSD** (gp2 and gp3)
+- **Provisioned IOPS SSD** (io1)
+- **Magnetic** (standard)
+
+### Backup data
+
+#### Automated backups
+
+Automated backups are turned on by default. This backs up an entire DB instance (not just individual databases on the
+instance) and transaction logs. When a DB instance is being created, you set a backup window that is the period of time
+that automatic backups occur.
+
+**Retaining backups**: Automated backups are retained between 0 and 35 days. The 0 days setting stops automated backups
+from happening. If you set it to 0, it will also delete all existing automated backups. This is not ideal. The benefit
+of automated backups that you can do point-in-time recovery.
+
+**Point-in-time recovery**: This creates a new DB instance using data restored from a specific point in time. This
+restoration method provides more granularity by restoring the full backup and rolling back transactions up to the
+specified time range.
+
+#### Manual snapshots
+
+If you want to keep your automated backups longer than 35 days, use manual snapshots. Manual snapshots are similar to
+taking Amazon EBS snapshots, except you manage them in the Amazon RDS console. These are backups that you can initiate
+at any time. They exist until you delete them. For example, to meet a compliance requirement that mandates you to keep
+database backups for a year, you need to use manual snapshots. If you restore data from a manual snapshot, it creates a
+new DB instance using the data from the snapshot.
+
+### Choosing a backup option
+
+It is advisable to deploy both backup options. Automated backups are beneficial for point-in-time recovery. With manual
+snapshots, you can retain backups for longer than 35 days.
+
+### Redundancy with Amazon RDS Multi-AZ
+
+In an Amazon **RDS Multi-AZ deployment**, Amazon RDS creates a **redundant copy** of your database in another
+Availability Zone. You end up with **two copies** of your database — a **primary copy** in a subnet in one Availability
+Zone and a **standby copy** in a subnet in a second Availability Zone.
+
+The primary copy of your database provides access to your data so that applications can query and display the
+information. The data in the primary copy is **synchronously replicated** to the standby copy. The **standby** copy is
+**not** considered an **active** database, and it does not get queried by applications.
+
+To improve availability, Amazon RDS Multi-AZ **ensures** that you have **two copies** of your database **running** and
+that **one of them** is in the **primary** role. If an availability issue arises, such as the primary database loses
+connectivity, Amazon **RDS initiates an automatic failover**.
+
+![multi-az-rds](images/multi-az-rds.png)
+
+When you create a DB instance, a Domain Name System (DNS) name is provided. AWS uses that DNS name to fail over to the
+standby database. In an **automatic failover**, the **standby database is promoted to the primary role**, and queries
+are redirected to the new primary database.
+
+To help ensure that you don't lose Multi-AZ configuration, there are two ways you can create a new standby database:
+
+- Demote the previous primary to standby if it's still up and running.
+- Stand up a new standby DB instance.
+
+### Amazon RDS security
+
+Network **ACLs** and **security groups** help users dictate the **flow of traffic**. If you want to **restrict the
+actions** and **resources** others can access, you can use AWS Identity and Access Management (**IAM**) policies.
+
