@@ -733,3 +733,138 @@ To help ensure that you don't lose Multi-AZ configuration, there are two ways yo
 Network **ACLs** and **security groups** help users dictate the **flow of traffic**. If you want to **restrict the
 actions** and **resources** others can access, you can use AWS Identity and Access Management (**IAM**) policies.
 
+## Monitoring
+
+**Amazon S3 metrics:**
+
+- Size of objects stored in a bucket
+- Number of objects stored in a bucket
+- Number of HTTP request made to a bucket
+
+**RDS metrics:**
+
+- Database connections
+- CPU utilization of an instance
+- Disk space consumption
+
+**EC2 metrics:**
+
+- CPU utilization
+- Network utilization
+- Disk performance
+- Status checks
+
+### Monitoring benefits:
+
+- Respond proactively
+- Improve performance and reliability
+- Recognize security threats and events
+- Make data-driven decisions
+- Create cost-effective solutions
+
+## Amazon CloudWatch
+
+Amazon CloudWatch is a monitoring and observability service that collects your resource data and provides actionable
+insights into your applications.
+
+### Visibility using CloudWatch
+
+You can use CloudWatch to do the following:
+
+- Detect anomalous behavior in your environments.
+- Set alarms to alert you when something is not right.
+- Visualize logs and metrics with the AWS Management Console.
+- Take automated actions like scaling.
+- Troubleshoot issues.
+- Discover insights to keep your applications healthy.
+
+![cloud-watch](images/cloud-watch.png)
+
+Many AWS services automatically send metrics to CloudWatch **for free** at a rate of **1 data point per metric per
+5-minute interval**. This is called **basic monitoring**, and it gives you visibility into your systems without any
+extra cost.
+
+For applications running on EC2 instances, you can get more granularity by posting metrics every minute instead of every
+5-minutes using a feature like **detailed monitoring**. Detailed monitoring **incurs a fee**.
+
+### CloudWatch concepts
+
+CloudWatch concepts
+
+**Metrics** are the fundamental concept in CloudWatch. A metric represents a **time-ordered set of data points** that
+are published to CloudWatch. Every metric data point must be associated with a timestamp.
+
+AWS services that send data to CloudWatch attach **dimensions** to each metric. A dimension is a **name and value pair**
+that is part of the metric’s identity. You can use dimensions to filter the results that CloudWatch returns. For
+example, many Amazon EC2 metrics publish InstanceId as a dimension name and the actual instance ID as the value for that
+dimension.
+
+By default, many AWS services provide **metrics at no charge** for resources such as **EC2** instances, Amazon Elastic
+Block Store (Amazon **EBS**) volumes, and Amazon **RDS** database (DB) instances. For a **charge**, you can activate
+features such as **detailed monitoring** or publishing your **own application metrics** on resources such as your EC2
+instances.
+
+### Custom metrics
+
+Some examples of custom metrics include the following:
+
+- Webpage load times
+- Request error rates
+- Number of processes or threads on your instance
+- Amount of work performed by your application
+
+### CloudWatch dashboards
+
+**Dashboards** are customizable home pages you can configure for data visualization for one or more metrics through
+widgets, such as a graph or text.
+
+Data from different AWS Regions can be collected into a single dashboard to create a global view of your architecture.
+
+CloudWatch aggregates statistics according to the period of time that you specify when creating your graph or requesting
+your metrics. You can also choose whether your metric widgets display live data. **Live data** is data published within
+the last minute that has not been fully aggregated.
+
+You are not bound to using CloudWatch exclusively for all your visualization needs. You can use **external** or **custom
+tools** to ingest and analyze CloudWatch metrics using the **GetMetricData API**.
+
+As far as security is concerned, with AWS Identity and Access Management (**IAM**) policies, you control who has access
+to view or manage your CloudWatch dashboards.
+
+### Amazon CloudWatch Logs
+
+**CloudWatch Logs** is centralized place for logs to be stored and analyzed. With this service, you can monitor, store,
+and access your log files from applications running on EC2 instances, AWS Lambda functions, and other sources.
+
+Some services, like **Lambda**, are **set up to send log data** to CloudWatch Logs with minimal effort. With Lambda, all
+you need to do is give the Lambda function the **correct IAM permissions** to post logs to CloudWatch Logs. Other
+services require more configuration. For example, to send your application logs from an **EC2 instance** into CloudWatch
+Logs, you need to install and configure the **CloudWatch Logs agent** on the EC2 instance. With the CloudWatch Logs
+agent, EC2 instances can automatically send log data to CloudWatch Logs.
+
+#### CloudWatch Logs terminology
+
+![terminology](images/cloud-watch-terminology.png)
+
+### CloudWatch alarms
+
+You can create CloudWatch alarms to automatically initiate actions based on sustained state changes of your metrics. You
+configure when alarms are invoked and the action that is performed.
+
+To set up an alarm you need to choose the **metric**, **threshold**, and **time period**.
+
+An alarm can be invoked when it transitions from one state to another. After an alarm is invoked, it can **initiate an
+action**. Actions can be an Amazon **EC2 action**, an **automatic scaling** action, or a **notification** sent to Amazon
+**Simple Notification Service** (Amazon SNS).
+
+An alarm can be in 3 possible states: **OK**, **ALARM**, and **INSUFFICIENT_DATA**.
+
+### Prevent and troubleshoot issues with CloudWatch alarms
+
+You can set up different alarms for different reasons to help you prevent or troubleshoot operational issues. In the
+scenario just described, the alarm invokes an Amazon SNS notification that goes to a person who looks into the issue
+manually.
+
+Another option is to have alarms invoke actions that automatically remediate technical issues.
+
+### Solution Optimization
+
