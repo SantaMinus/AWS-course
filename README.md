@@ -1334,3 +1334,376 @@ time. As you write code, Amazon CodeWhisperer analyzes your code and comments as
 development environment (IDE). CodeWhisperer then automatically generates suggestions based on your existing code and
 comments. Additionally, CodeWhisperer analyzes the surrounding code, ensuring the generated code matches your style,
 naming conventions, and seamlessly integrates into the existing context.
+
+# Serverless
+
+### Serverless Means
+
+- No server management
+- Flexible scaling
+- Automated high availability
+- No idle capacity
+
+### AWS serverless platform
+
+The AWS serverless platform includes a number of fully managed services that are tightly integrated with AWS Lambda and
+well-suited for serverless applications. Developer tools, including the AWS Serverless Application Model (AWS SAM), help
+simplify deployment of your Lambda functions and serverless applications.
+
+![serverless-services](images/serverless-services.jpg)
+
+### AWS Lambda features
+
+- Integrates with and extends other AWS services
+- Flexible resource and concurrency model
+- Flexible permissions model
+- Availability and fault tolerance are built in
+- Pay for value
+
+### Event-driven architectures
+
+An **event-driven architecture** uses events to initiate actions and communication between decoupled services. An *
+*event** is a change in state, a user request, or an update, like an item being placed in a shopping cart in an
+e-commerce website. When an event occurs, the information is published for other services to consume it. In event-driven
+architectures, events are the primary mechanism for sharing information across services. These events are observable,
+such as a new message in a log file, rather than directed, such as a command to specifically do something.
+
+### Producers, routers, consumers
+
+![producer-router-consumer](images/producer-router-consumer.jpg)
+
+### Lambda functions
+
+The code you run on AWS Lambda is called a **Lambda function**. Think of a **function** as a small, self-contained
+application. Each function includes your code as well as some associated configuration information, including the
+function name and resource requirements. Lambda functions are **stateless**, with no affinity to the underlying
+infrastructure. Lambda can rapidly launch as many copies of the function as needed to scale to the rate of incoming
+events.
+
+![lambda-configuration](images/lambda-configuration.jpg)
+
+### Invocation models for running Lambda functions
+
+### Synchronous invocation
+
+When you invoke a function synchronously, Lambda runs the function and waits for a response. When the function
+completes, Lambda returns the response from the function's code with additional data, such as the version of the
+function that was invoked. Synchronous events expect an immediate response from the function invocation.
+
+With this model, there are no built-in retries. You must manage your retry strategy within your application code.
+
+The following AWS services invoke Lambda synchronously:
+
+* Amazon API Gateway
+* Amazon Cognito
+* AWS CloudFormation
+* Amazon Alexa
+* Amazon Lex
+* Amazon CloudFront
+
+### Asynchronous invocation
+
+When you invoke a function asynchronously, events are **queued** and the requestor doesn't wait for the function to
+complete. This model is appropriate when the client doesn't need an immediate response.
+
+With the asynchronous model, you can make use of **destinations**. Use destinations to send records of asynchronous
+invocations to other services.
+
+The following AWS services invoke Lambda asynchronously:
+
+- Amazon SNS
+- Amazon S3
+- Amazon EventBridge
+
+![async-invocation](images/async-invocation.jpg)
+
+A **destination** can send records of asynchronous invocations to other services. You can configure separate
+destinations for events that fail processing and for events that process successfully. You can configure destinations on
+a function, a version, or an alias, similarly to how you can configure error handling settings. With destinations, you
+can address errors and successes without needing to write more code.
+
+The following diagram shows a function that is processing asynchronous invocations. When the function returns a success
+response or exits without producing an error, Lambda sends a record of the invocation to an EventBridge event bus. When
+an event fails all processing attempts, Lambda sends an invocation record to an Amazon Simple Queue Service (Amazon SQS)
+queue.
+
+![async-destinations](images/async-destinations.jpg)
+
+### Polling invocation
+
+#### Polling
+
+This invocation model is designed to integrate with AWS **streaming and queuing based services** with no code or server
+management. Lambda will poll (or watch) these services, retrieve any matching events, and invoke your functions. This
+invocation model supports the following services:
+
+- Amazon Kinesis
+- Amazon SQS
+- Amazon DynamoDB Streams
+
+With this type of integration, AWS will manage the poller on your behalf and perform synchronous invocations of your
+function.
+
+With this model, the **retry behavior varies** depending on the event source and its configuration.
+
+#### Event source mapping
+
+The configuration of services as event triggers is known as event source mapping. This process occurs when you configure
+event sources to launch your Lambda functions and then grant theses sources IAM permissions to access the Lambda
+function.
+
+Lambda reads events from the following services:
+
+- Amazon DynamoDB
+- Amazon Kinesis
+- Amazon MQ
+- Amazon Managed Streaming for Apache Kafka (MSK)
+- self-managed Apache Kafka
+- Amazon SQS
+
+### Invocation model error behavior
+
+| Invocation model	 | Error behavior            |
+|-------------------|---------------------------|
+| Synchronous       | No retries                |
+| Asynchronous      | 	Built in – retries twice |
+| Polling           | Depends on event source   |
+
+### Lambda execution environment
+
+Lambda invokes your function in an **execution environment**, which is a **secure** and **isolated** environment. The
+execution environment **manages the resources** required to run your function, and also **provides lifecycle support**
+for the function's runtime and any external extensions associated with your function.
+
+## Execution environment lifecycle
+
+![exec-env-lifecycle](images/exec-env-lifecycle.jpg)
+
+> When you create your Lambda function, you specify configuration information, such as the amount of available memory
+> and the maximum invocation time allowed for your function. Lambda uses this information to set up the execution
+> environment.
+>
+> The function's runtime and each external extension are processes that run within the execution environment.
+> Permissions, resources, credentials, and environment variables are shared between the function and the extensions.
+
+### 1. Init phase
+
+![init-phase.jpg](images%2Finit-phase.jpg)
+
+In this phase, Lambda creates or unfreezes an execution environment with the configured resources, downloads the code
+for the function and all layers, initializes any extensions, initializes the runtime, and then runs the function’s
+initialization code (the code outside the main handler).
+
+The Init phase happens either during the first invocation, or before function invocations if you have enabled
+provisioned concurrency.
+
+The Init phase is split into three sub-phases:
+
+- Extension init - starts all extensions
+- Runtime init - bootstraps the runtime
+- Function init - runs the function's static code
+
+These sub-phases ensure that all extensions and the runtime complete their setup tasks before the function code runs.
+
+### 2. Invoke phase
+
+![init-phase.jpg](images%2Finit-phase.jpg)
+
+In this phase, Lambda invokes the function handler. After the function runs to completion, Lambda prepares to handle
+another function invocation.
+
+### 3. Shutdown phase
+
+![shutdown-phase.jpg](images%2Fshutdown-phase.jpg)
+
+If the Lambda function does not receive any invocations for a period of time, this phase initiates. In the Shutdown
+phase, Lambda shuts down the runtime, alerts the extensions to let them stop cleanly, and then **removes the environment
+**. Lambda sends a shutdown event to each extension, which tells the extension that the environment is about to be shut
+down.
+
+### Summary
+
+When you write your function code, do not assume that Lambda automatically reuses the execution environment for
+subsequent function invocations. Other factors may require Lambda to create a new execution environment, which can lead
+to unexpected results. Always test to optimize the functions and adjust the settings to meet your needs.
+
+## Performance optimization
+
+### Cold and warm starts
+
+A **cold start** occurs when a **new execution environment** is required to run a Lambda function. When the Lambda
+service receives a request to run a function, the service first prepares an execution environment. During this step, the
+service downloads the code for the function, then creates the execution environment with the specified memory, runtime,
+and configuration. Once complete, Lambda runs any initialization code outside of the event handler before finally
+running the handler code.
+
+In a **warm start**, the Lambda service **retains the environment** instead of destroying it immediately. This allows
+the function to run again within the same execution environment. This saves time by not needing to initialize the
+environment.
+
+![cold-warm-start.jpg](images%2Fcold-warm-start.jpg)
+
+> **AWS** is responsible for optimizing the time it takes to start up the environment and initialize the runtime.
+>
+> A **user** is responsible for optimizing the speed with which the packages and dependencies required for the function
+> are initialized.
+>
+> **Billing** starts after the runtime have been initialized.
+
+### Best practice: Minimize cold start times
+
+When you invoke a Lambda function, the invocation is routed to an execution environment to process the request. If the
+environment is not already initialized, the start-up time of the environment adds to latency. If a function has not been
+used for some time, if more concurrent invocations are required, or if you update a function, new environments are
+created. Creation of these environments can introduce **"cold start" latency** for the invocations that are routed to a
+new environment. **This latency is implied when using the term cold start**. For most applications, this additional
+latency is not a problem. However, for some synchronous models, this latency can inhibit optimal performance. It is
+critical to understand latency requirements and try to optimize your function for peak performance.
+
+After optimizing your function, another way to minimize cold starts is to use **provisioned concurrency**. **Provisioned
+concurrency** is a Lambda feature that prepares concurrent execution environments before invocations.
+
+If you need predictable function start times for your workload, **provisioned concurrency ensures the lowest possible
+latency**. This feature keeps your **functions initialized** and warm, and ready to respond in double-digit milliseconds
+at the scale you provision. Unlike with on-demand Lambda, this means that all setup activities happen before invocation,
+including running the initialization code.
+
+![provisioned-concurrency.jpg](images%2Fprovisioned-concurrency.jpg)
+
+### Best practice: Write functions to take advantage of warm starts
+
+1. Store and reference dependencies locally.
+2. Limit re-initialization of variables.
+3. Add code to check for and reuse existing connections.
+4. Use tmp space as transient cache.
+5. Check that background processes have completed.
+
+## AWS Lambda Function Permissions
+
+With Lambda functions, there are two sides that define the necessary scope of permissions – permission **to invoke the
+function**, and permission of the Lambda function itself **to act upon other services**. Because Lambda is fully
+integrated with AWS Identity and Access Management (IAM), you can control the exact actions of each side of the Lambda
+function.
+
+![lambda-policies.jpg](images%2Flambda-policies.jpg)
+
+Permissions **to invoke the function** are controlled using an IAM **resource-based policy**. An IAM execution role
+defines the permissions that control what the function is allowed to do when interacting with other AWS services.
+
+![lambda-policies2.jpg](images%2Flambda-policies2.jpg)
+
+**Resource policies** grant permissions to invoke the function, whereas the **execution role** strictly controls what
+the function can to do within the other AWS service.
+
+### Execution role
+
+The execution role gives your function permissions to interact with other services. You provide this role when you
+create a function, and Lambda assumes the role when your function is invoked. The policy for this role defines the
+actions the role is allowed to take — for example, writing to a DynamoDB table. The role must include a trust policy
+that allows Lambda to “AssumeRole” so that it can take that action for another service.
+
+![iam-exec-role.jpg](images%2Fiam-exec-role.jpg)
+
+You can also use **IAM Access Analyzer** to help identify the required permissions for the IAM execution role. **IAM
+Access Analyzer** reviews your **AWS CloudTrail** logs over the date range that you specify and generates a policy
+template with only the permissions that the function used during that time.
+
+### Example: Execution role definitions
+
+#### IAM policy
+
+This IAM policy allows the function to perform the "Action": "dynamodb:PutItem" action against a DynamoDB table called
+"test" in the us-west-2 region.
+
+![iam-policy-example.jpg](images%2Fiam-policy-example.jpg)
+
+#### Trust policy
+
+A **trust policy** defines what actions your role can assume. The trust policy allows Lambda to use the role's
+permissions by giving the service principal lambda.amazonaws.com permission to call the AWS Security Token Service (AWS
+STS) AssumeRole action.
+
+This example illustrates that the principal "Service":"lambda.amazonaws.com" can take the "Action":"sts:AssumeRole"
+allowing Lambda to assume the role and invoke the function on your behalf.
+
+![trust-policy-example.jpg](images%2Ftrust-policy-example.jpg)
+
+### Resource-based policy
+
+A **resource policy** (also called a **function policy**) tells the Lambda service which principals have permission to
+invoke the Lambda function. An AWS principal may be a **user**, **role**, another AWS **service**, or another AWS
+**account**.
+A **resource policy determines who is allowed in **(who can initiate your function, such as Amazon S3), and it can be
+used to grant **access across accounts**.
+
+An execution role must be **created or selected when creating your function**, and it **controls what Lambda is allowed
+to
+do** (such as writing to a DynamoDB table). It includes a trust policy with AssumeRole.
+
+![iam-resource-policy.jpg](images%2Fiam-resource-policy.jpg)
+
+Resource policies make it easy to grant access to the Lambda function across separate AWS accounts. For example, if you
+need an S3 bucket in the production account to invoke your Lambda function in the Prod-2 account, you can create a new
+IAM role in Prod-2 and allow production to assume that role. Alternatively, you can include a resource-based policy that
+allows production to invoke the function in Prod-2.
+
+The **resource-based policy is an easier option** and you can see and modify it via the Lambda console. A consideration
+with cross-account permissions is that a **resource policy does have a size limit**. If you have many different accounts
+that need to invoke the function and you have to add permissions for each account via the resource policy, you might
+reach the policy size limit. In that case, you would need to use **IAM roles instead** of resource policies.
+
+### Policy comparison
+
+#### Lambda resource-based (function) policy
+
+- Associated with a "push" event source such as Amazon API Gateway
+- Created when you add a trigger to a Lambda function
+- Allows the event source to take the lambda:InvokeFunction action
+
+#### IAM execution role
+
+- Role selected or created when you create a Lambda function
+- IAM policy includes actions you can take with the resource
+- Trust policy that allows Lambda to AssumeRole
+- Creator must have permission for iam:PassRole
+
+### Distinct permissions for distinct purposes
+
+![policy-purpose1.jpg](images%2Fpolicy-purpose1.jpg)
+![policy-purpose2.jpg](images%2Fpolicy-purpose2.jpg)
+![policy-purpose3.jpg](images%2Fpolicy-purpose3.jpg)
+
+### Ease of management
+
+For ease of policy management, you can use authoring tools such as the AWS **Serverless Application Model** (AWS SAM) to
+help manage your policies. For a Lambda function, AWS SAM scopes the permissions of your Lambda functions to the
+resources used by your application. You can add IAM policies as part of the AWS SAM template. The policies property can
+be the name of AWS managed policies, inline IAM policy documents, or AWS SAM policy templates.
+
+### Example resource policy
+
+- The policy has an Effect of "Allow". The Effect can be Deny or Allow.
+- The Principal is the Amazon S3 "s3.amazonaws.com" service. This policy is allowing the Amazon S3 service to perform an
+  Action.
+- The Action that S3 is allowed to perform is the ability to invoke a Lambda function "lambda:InvokeFunction" called "
+  my-s3-function".
+
+![resource-policy-example.jpg](images%2Fresource-policy-example.jpg)
+
+### Accessing resources in a VPC
+
+Enabling your Lambda function to access resources inside your virtual private cloud (VPC) requires additional
+**VPC-specific configuration information**, such as VPC **subnet IDs** and **security group IDs**. This functionality
+allows Lambda to access resources in the VPC. It does not change how the function is secured. You also need an
+**execution role** with permissions to create, describe, and delete elastic network interfaces. Lambda provides a
+permissions policy for this purpose named "AWSLambdaVPCAccessExecutionRole".
+
+### Lambda and AWS PrivateLink
+
+To establish a private connection between your VPC and Lambda, create an interface VPC endpoint. Interface endpoints are
+powered by AWS PrivateLink, which enables you to privately access Lambda APIs without an internet gateway, NAT device,
+VPN connection, or AWS Direct Connect connection.
+
+Instances in your VPC don't need public IP addresses to communicate with Lambda APIs. Traffic between your VPC and
+Lambda
+does not leave the AWS network. 
