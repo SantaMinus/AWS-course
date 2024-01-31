@@ -1893,7 +1893,40 @@ With AWS SAM CLI for testing, you can do the following:
 ### Serverless CI/CD pipeline
 
 **CodeBuild** – Automate the process of packaging code and running tests before the code is deployed.
-**CodeDeploy** – Use version management options to ensure safe deployments to production. 
+**CodeDeploy** – Use version management options to ensure safe deployments to production.
 
 ![ci-cd-pipeline.jpg](images%2Fci-cd-pipeline.jpg)
+
+## Deploying and Testing Serverless Applications
+
+The **AWS CloudFormation** template is considered the blueprint for the Lambda function.
+CloudFormation is **infrastructure as code** (IaaC).
+
+### Serverless development environments
+
+In a serverless deployment, you provide all the components necessary to deploy your function:
+
+- Code, bundled with any necessary dependencies
+- CloudFormation template, which is the blueprint for building the serverless environment
+
+> A key difference in the developer workflow is how the code and the application are tested.
+
+**AWS SAM makes serverless development easier.** When you provide AWS SAM with simplified instructions for your
+environment, it transforms that information into the fully detailed CloudFormation template that you can use to build
+your stack. All CloudFormation options are still available within AWS SAM.
+
+**Ensures environmental parity**. AWS SAM streamlines the tasks for creating a stack and deploying the same stack to
+each account.
+
+**Simplifies experimentation**. Without the overhead of maintaining instances, you can use AWS SAM to quickly start
+stacks for different feature branches. You can experiment without incurring costs outside of the actual invocations that
+run on that environment.
+
+### Reduce risk using versions and aliases
+
+One potential challenge to serverless deployments is that when the function is deployed, it becomes live immediately.
+This means that a function can potentially go live without testing it, which puts your working applications at risk.
+This risk is especially true if you move toward an automated CI/CD pipeline and need to easily promote new code or roll
+back if there's a problem. To mitigate this risk, you can version your Lambda functions and add aliases to ensure safe
+deployments.
 
