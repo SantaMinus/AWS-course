@@ -1000,7 +1000,7 @@ Another option is to have alarms invoke actions that automatically remediate tec
 
 ### Solution Optimization
 
-However, when there is more than one instance, it brings new challenges, such as the following:
+When there is more than one instance, it brings new challenges, such as the following:
 
 - **Replication process** – The first challenge with multiple EC2 instances is that you need to create a process to
   replicate the configuration files, software patches, and application across instances. The best method is to automate
