@@ -523,3 +523,262 @@ of the OpenAPI 3.0 versions, like 3.0.1. OpenAPI is an industry-standard way to 
 With SAM, you can document your API in an external OpenAPI or Swagger file, and then reference that in a SAM template.
 
 ## Managing API Access
+
+API Gateway provides you with multiple, customizable options for:
+
+- Authorizing an entity to access your APIs
+- Providing more granular control
+- Controlling the amount of access through throttling
+
+#### Authorization and authentication comparison
+
+|                           | Authentication | Authorization | Signature V4 | Cognito User Pools | Third-Party Auth | Multiple Header Support | Additional Costs                       |
+|---------------------------|----------------|---------------|--------------|--------------------|------------------|-------------------------|----------------------------------------|
+| AWS IAM                   | +              | +             | +            |                    |                  |                         | None                                   |
+| Lambda Authorizer Token   | +              | +             |              | +                  | +                |                         | Pay per authorizer invoke              |
+| Lambda Authorizer Request | +              | +             |              | +                  | +                | +                       | Pay per authorizer invoke              |
+| Amazon Cognito            | +              | +             |              | +                  |                  |                         | Pay based on your monthly active users |
+
+### Authorization for API Gateway
+
+There are three main ways to authorize API calls to your API Gateway endpoints:
+
+1. Use IAM and **Signature version 4** (also known as Sig v4) to authenticate and authorize entities to access your
+   APIs.
+2. Use **Lambda Authorizers**, which you can use to support bearer token authentication strategies such as **OAuth** or
+   **SAML**.
+3. Use **Amazon Cognito** with **user pools**.
+
+### Authorizing with IAM
+
+If you have an **internal service** or a **restricted number of customers**, IAM is a great choice for authorization,
+especially for applications that use IAM to interact with other AWS services using IAM roles.
+
+![iam-auth.jpg](images%2Fiam-auth.jpg)
+
+1) With IAM authorization, all requests are required to be signed using **Sig v4**
+2) The process uses your AWS **access key** & **secret key** to compute an **HMAC signature** using **SHA256**. You can
+   obtain these keys as an IAM user or by assuming an IAM role.
+3) The key information is added to the **Authorization header**, and behind the scenes, API Gateway will take that
+   signed request, parse it, and determine whether the user who signed the request has the IAM permissions to invoke
+   your API.
+
+   If not, API Gateway will simply deny and reject that request. So for this type of authentication, your **requestor
+   must
+   have AWS credentials**.
+
+### Lambda Authorizers
+
+![lambda-auth.jpg](images%2Flambda-auth.jpg)
+
+1. A Lambda Authorizer is a Lambda function used to perform any custom authorization needed.
+   Lambda **authorizer types**: **Token** & **Request**
+2. When a client calls the API, API Gateway verifies whether th Lambda Authorizer is configured for the API method.
+
+   If so, API Gateway calls the Lambda function
+3. In this call, API Gateway supplies the authorization token (or the request parameters based on the authorizer), and
+   the Lambda function returns the policy that allows or denies the caller's request
+4. API Gateway also supports an optional policy cache that you can configure for your Lambda Authorizer.
+
+   THis feature increases performance by reducing the number of invocations of your Lambda Authorizer for previously
+   authorized tokens.ith this cache, you can configure a custom TTL.
+
+### Lambda Authorizer token types
+
+For token-type Lambda Authorizers, API Gateway passes the source token to the Lambda function as a JSON input. Based on
+the value of this token, your Lambda function will determine whether to allow the request.
+
+![lambda-token-auth.jpg](images%2Flambda-token-auth.jpg)
+
+### Lambda Authorizer request types
+
+Request-type Lambda Authorizers are useful if you need more information about the request itself before authorizing it.
+
+![lambda-auth-request-type.jpg](images%2Flambda-auth-request-type.jpg)
+
+### Cognito Authorizers
+
+As an alternative to using IAM or Lambda authorizers, you can use Amazon Cognito and a Cognito User Pool to control
+access to your APIs.
+
+![cognito-auth.jpg](images%2Fcognito-auth.jpg)
+
+![cognito-auth-1.png](images%2Fcognito-auth-1.png)
+
+![cognito-auth-2.png](images%2Fcognito-auth-2.png)
+
+![cognito-auth-3.png](images%2Fcognito-auth-3.png)
+
+![cognito-auth-4.png](images%2Fcognito-auth-4.png)
+
+## Throttling and usage plans
+
+Beyond just allowing or denying access to your APIs, API Gateway also helps you manage the volume of API calls that are
+processed through your API endpoint.
+
+With API Gateway, you can set throttle and quota limits on your API consumers. This can useful for things such as
+preventing one consumer from using all of your backend system’s capacity or to ensure that your downstream systems can
+manage the number of requests you send through.
+
+### API keys
+
+With API Gateway, you can create and distribute API keys to your customers, which can be used to identify the consumer
+and apply desired usage and throttle limits to their requests. Customers include the API key through x-API-key header in
+requests.
+
+### Usage plans
+
+You can set throttle and quota limits based on API keys through the usage plans feature. You can set up usage plans for:
+
+- API Key Throttling per second and burst
+- API Key Quota by day, week, or month
+- API Key Usage by daily usage records
+
+### Example of usage plans based on types of consumers
+
+![throttling.jpg](images%2Fthrottling.jpg)
+
+With usage plans, you can create both the throttle rate limit and apply a daily quota.
+
+### Token bucket algorithm
+
+**The token bucket algorithm** is a widely used algorithm for checking that network traffic conforms to set limits. A
+token, in this case, counts as a request and the burst is the maximum bucket size.
+
+Requests that come into the bucket are fulfilled at a steady rate. If the rate at which the bucket is being filled
+causes the bucket to fill up and exceed the burst value, a **429 Too Many Requests** error would be returned.
+
+API Gateway sets a limit on a steady-state rate and a burst of request submissions per account and per Region. At the
+account level, by default, API Gateway limits the steady-state request rate to 10,000 requests per second. It limits the
+burst to 5,000 requests across all APIs within an AWS account.
+
+![token-bucket.png](images%2Ftoken-bucket.png)
+
+### Throttling settings hierarchy
+
+The type and level of throttling applied to a request is dependent on all of the limits involved and are applied in this
+order:
+
+- **Per-client**, **per-method** throttling limits that you set for an API stage in a usage plan
+- **Per-client** throttling limits that you set in a usage plan
+- **Default per-method limits** and **individual per-method limits** that you set in API stage settings
+- The **account level limit**
+
+## IAM permissions
+
+When it comes to granting access to your APIs, you need to think about two types of permissions:
+
+1. Who can invoke the API: To call a deployed API, or refresh the API caching, the caller needs the **execute-api**
+   permission.
+2. Who can manage the API: To create, deploy, and manage an API in API Gateway, the API developer needs the
+   **apigateway** permission.
+
+### Invoke permissions
+
+For the **execute-api** permission, you need to create IAM policies that permit a specified API caller to invoke the
+desired API method. To apply this IAM policy on the API method, you need to configure the API method to use an
+authorization type of **AWS_IAM**.
+
+![execute-api.jpg](images%2Fexecute-api.jpg)
+
+For the **execute-api** permission, create IAM policies that permit a specified API caller to invoke the desired API
+method.
+
+### Manage permissions
+
+To allow an API developer to create and manage an API in API Gateway, you need IAM permission policies that allow a
+specified API developer to create, update, deploy, view, or delete required API entities. To do that, create a policy
+using the **apigateway:HTTP_VERB** format, associated with the specific resource using the verb that you want to permit
+or deny in the policy.
+
+![apigateway.jpg](images%2Fapigateway.jpg)
+
+### Resource policies
+
+****
+
+## Monitoring and Troubleshooting
+
+### CloudWatch Logs for API Gateway
+
+**Execution logging** logs what’s happening on the roundtrip of a request.
+
+Execution logs can be useful to troubleshoot APIs, but can result in **logging sensitive data**. Because of this, it is
+recommended you don't enable Log full requests/responses data for production APIs. In addition, there is a cost
+component associated with logging your APIs.
+
+**Access logging** provides details about who's invoking your API. This includes everything including IP address, the
+method used, the user protocol, and the agent that's invoking your API.
+
+Access logging is fully customizable using JSON formatting.
+
+## Monitoring with X-Ray and CloudTrail
+
+### AWS X-Ray
+
+You can use X-Ray to trace and analyze user requests as they travel through your Amazon API Gateway APIs to the
+underlying services.
+
+With X-Ray, you can trace and analyze requests as they travel through your APIs to services:
+
+- Analyze latencies and debug errors in your APIs and their backend services.
+- Configure sampling rules to focus on specific requests.
+
+### AWS CloudTrail
+
+The second service, CloudTrail, captures all API calls for API Gateway as events, including calls from the API Gateway
+console and from code calls to your API Gateway APIs.
+
+- IP address, requester, and time of request are included.
+- Event history can be reviewed.
+- Create a trail to send events to an Amazon Simple Storage Service (Amazon S3) bucket.
+
+### X-Ray trace examples
+
+This first example demonstrates API Gateway Latency metrics for a Lambda cold start.
+
+![x-ray-trace-1.png](images%2Fx-ray-trace-1.png)
+![x-ray-trace-2.png](images%2Fx-ray-trace-2.png)
+![x-ray-trace-3.png](images%2Fx-ray-trace-3.png)
+![x-ray-trace-4.png](images%2Fx-ray-trace-4.png)
+
+Next, this example demonstrates the API Gateway Latency metrics for a Lambda warm start.
+
+![x-ray-warm-1.png](images%2Fx-ray-warm-1.png)
+![x-ray-warm-2.png](images%2Fx-ray-warm-2.png)
+![x-ray-warm-3.png](images%2Fx-ray-warm-3.png)
+![x-ray-warm-4.png](images%2Fx-ray-warm-4.png)
+
+## Data Mapping and Request Validation
+
+### Data transformations with mapping templates
+
+![xml-to-json.png](images%2Fxml-to-json.png)
+
+### Key variables for transformations
+
+| Variable        | Use Case                                                                            |
+|-----------------|-------------------------------------------------------------------------------------|
+| $input          | Body, json, params, path                                                            |
+| $stageVariables | Any stage variable name                                                             |
+| $util           | escapeJavaScript()<br> parseJson()<br> urlEncode/Decode()<br> base64Encode/Decode() |
+
+### Handling errors with Gateway Responses
+
+For invalid requests, API Gateway bypasses the integration altogether and returns an error response. By default, the
+error response contains a short descriptive error message.
+
+For some of the error responses, API Gateway allows customization by API developers to return the responses in different
+formats. You can access the Gateway Responses option on the API Gateway console. Some of the customization of various
+error responses you can use are:
+
+- Change HTTP status code.
+- Modify body content.
+- Add headers.
+
+### Offloading request validation to API Gateway
+
+In conjunction with data transformation and customized Gateway Responses, you can also let API Gateway handle some of
+your basic validations, rather than making the call or building that validation into the backend. 
+
+![request-validation.png](images%2Frequest-validation.png)
